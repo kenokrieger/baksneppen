@@ -1,11 +1,16 @@
-import tkinter as tk
+from time import sleep
 
 import numpy as np
 from random import random, randint
 
-from time import sleep
+import tkinter as tk
+
+import matplotlib.gridspec as gridspec
+import matplotlib.ticker as ticker
 
 from model import Model
+
+HIST_BINS = np.arange(0, 7, 1)
 
 
 class BakSneppen(Model):
@@ -16,7 +21,10 @@ class BakSneppen(Model):
         super().__init__("Bak Sneppen Evolution model", 20, 3)
         tk.Label(self, text="Customisation", font="Verdana 12 bold").grid(row=0,column=1, sticky=tk.W)
         self.size = 16
+        self.silent = False
         self.change = []
+        self.avalanche_duration = 1
+        self.avalanche_durations = []
         self._add_sliders()
         self._add_controls()
         self.generate_subplots()
@@ -42,6 +50,9 @@ class BakSneppen(Model):
 
     def _add_controls(self):
         """Add controls for the simulation"""
+        tk.Label(self, text="Silent: ", font="Verdana 11").grid(row=5,column=1, sticky=tk.W)
+        self.silentButton = tk.Button(master=self, text="False", command=self.set_silent)
+        self.silentButton.grid(row=5, column=2)
         tk.Label(self, text="Simulation", font="Verdana 12 bold").grid(row=6,column=1, sticky=tk.W)
         tk.Button(master=self, text="Start", command=self.start_simulation).grid(row=7, column=1)
         tk.Button(master=self, text="Pause", command=self.stop_simulation).grid(row=7, column=2)
@@ -73,23 +84,33 @@ class BakSneppen(Model):
             self.update()
             self.after(1, self.animate)
 
+    def set_silent(self):
+        """Changes whether to visualise the simulation or not"""
+        self.silent = not self.silent
+        self.silentButton["text"] = ("True" if self.silent else "False")
+
     def export(self):
+        """Export data"""
         self.running = False
+        sleep(0.2)
         np.savetxt("fitness_change.dat", self.change)
+        np.savetxt("avalanche_durations.dat", self.avalanche_durations)
 
     def set_up_simulation(self):
         """Create the arrays needed for the simulation"""
         self.scatterplot.set_data([], [])
         self.least_fitness_line.set_data([], [])
-
-        while self.avalanches.lines:
-            self.avalanches.lines[0].remove()
+        self.avalancheline.set_data([], [])
+        self.duration_line.set_data([], [])
+        for rect in self.duration_histogram.patches:
+            rect.set_height(0.01)
 
         self.species = np.random.rand(self.size)
+        self.avalanche_duration = 1
+        self.avalanche_durations = []
         self.least_fitness = 0.0
         self.updatemode = 1
         self.time = 1
-        self.fitness_change = [0, 0]
         self.scatterplot.set_data(np.arange(0, self.species.shape[0], 1), self.species)
         self.liveview.set_xlim(-1, self.species.shape[0])
         self.liveview.set_ylim(0, 1)
@@ -100,10 +121,15 @@ class BakSneppen(Model):
         """The update algorithm for the Bak-Sneppen model."""
         weakling_index = np.argmin(self.species)
         least_fitness = self.species[weakling_index]
-        self.fitness_change[1] = 0.0
+
         if least_fitness > self.least_fitness:
-            self.fitness_change[1] = least_fitness - self.least_fitness
+            self.change.append(least_fitness - self.least_fitness)
             self.least_fitness = least_fitness
+            self.avalanche_durations.append(np.log10(self.avalanche_duration))
+            self.avalanche_duration = 1
+        else:
+            self.avalanche_duration += 1
+            self.change.append(0.0)
 
         if self.updatemode == 1:
             left_neighbour = weakling_index - 1
@@ -115,10 +141,9 @@ class BakSneppen(Model):
             self.species[weakling_index] = random()
             self.species[randint(0, self.species.shape[0] - 1)] = random()
 
-        self.visualise()
+        if not self.silent:
+            self.visualise()
         self.time += 1
-        self.fitness_change[0] = self.fitness_change[1]
-        self.change.append(self.fitness_change[0])
 
     def change_size(self, size):
         """
@@ -154,23 +179,42 @@ class BakSneppen(Model):
 
     def generate_subplots(self):
         """Add two subplots to the figure"""
-        self.liveview = self.figure.add_subplot(121)
+        grid = gridspec.GridSpec(ncols=2, nrows=2, figure=self.figure)
+        self.liveview = self.figure.add_subplot(grid[0:, 0])
         self.liveview.set_title("Fitness of the species")
         self.liveview.set_xlabel("Position in array")
         self.liveview.set_ylabel("Fitness")
         self.scatterplot, = self.liveview.plot([], [], color="blue", marker="o", linewidth=0)
         self.least_fitness_line, = self.liveview.plot([], [], color="blue", linestyle="dashed")
 
-        self.avalanches = self.figure.add_subplot(122)
+        self.avalanches = self.figure.add_subplot(grid[0, 1])
         self.avalanches.set_title("Change in minimum fitness")
         self.avalanches.set_xlabel("time")
         self.avalanches.set_ylabel("Change in minimum fitness")
+        self.avalancheline, = self.avalanches.plot([0,1], [1,1], color="blue")
+
+        self.durations = self.figure.add_subplot(grid[1, 1])
+        self.durations.set_title("Histogram of avalanche durations")
+        self.durations.set_xlabel("Duration")
+        self.durations.xaxis.set_major_formatter(ticker.FormatStrFormatter("$10^%d$"))
+        self.durations.set_ylabel("Frequency")
+        _, _, self.duration_histogram = self.durations.hist([0.01], HIST_BINS, rwidth=0.9)
+        self.duration_line, = self.durations.plot([], [], color="blue")
         self.figure.tight_layout()
         self.canvas.draw()
 
     def visualise(self):
+        """Visualise the model"""
         self.scatterplot.set_ydata(self.species)
         self.least_fitness_line.set_ydata(self.least_fitness)
-        self.avalanches.plot([self.time - 1, self.time], self.fitness_change, color="blue")
-        self.avalanches.set_xlim(self.avalanches.get_xlim()[0], self.time + 1)
+        self.avalancheline.set_data(np.arange(0, len(self.change), 1), np.array(self.change))
+        self.avalanches.set_xlim(-0.5, self.time + 1)
+        self.avalanches.set_ylim(-0.001, np.max(self.change) + 0.01)
+
+        n, _ = np.histogram(self.avalanche_durations, HIST_BINS)
+        for count, rect in zip(n, self.duration_histogram.patches):
+            rect.set_height(count)
+
+        self.durations.set_ylim(0.001, np.max(n) + 2)
+        self.durations.set_yscale("log")
         self.canvas.draw()

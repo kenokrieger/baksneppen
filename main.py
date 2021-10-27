@@ -1,6 +1,10 @@
 from evolution_models import BakSneppen
 
 
-if __name__ == "__main__":
+def main():
     model = BakSneppen()
     model.mainloop()
+
+
+if __name__ == "__main__":
+    main()
