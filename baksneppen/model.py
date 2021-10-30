@@ -1,15 +1,18 @@
+"""
+Contains a class for simulating the Bak-Sneppen model of evolution.
+"""
 import numpy as np
 
 from random import random, randint
 
-DEFAULT_SIZE = 30
+DEFAULT_SIZE = 16
 
 
 class BakSneppenModel:
     """The evolution model of Bak and Sneppen"""
 
     def __init__(self, size=None):
-        """Initialise the root window for the model"""
+        """Initialise the model"""
         self.size = size if size is not None else DEFAULT_SIZE
         self.set_up_simulation()
 
@@ -35,7 +38,7 @@ class BakSneppenModel:
 
         if least_fitness > self.least_fitness:
             self.least_fitness = least_fitness
-            self.avalanche_durations.append(np.log10(3 * self.avalanche_duration))
+            self.avalanche_durations.append(np.log10(self.avalanche_duration))
             self.avalanche_duration = 1
         else:
             self.avalanche_duration += 1
