@@ -95,6 +95,7 @@ class BakSneppen(Model):
         sleep(0.2)
         np.savetxt("fitness_change.dat", self.change)
         np.savetxt("avalanche_durations.dat", self.avalanche_durations)
+        self.figure.savefig("plot.png", dpi=300)
 
     def set_up_simulation(self):
         """Create the arrays needed for the simulation"""
@@ -215,6 +216,6 @@ class BakSneppen(Model):
         for count, rect in zip(n, self.duration_histogram.patches):
             rect.set_height(count)
 
-        self.durations.set_ylim(0.001, np.max(n) + 2)
+        self.durations.set_ylim(0.1, np.max(n) + 2)
         self.durations.set_yscale("log")
         self.canvas.draw()
