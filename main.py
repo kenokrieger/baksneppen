@@ -6,8 +6,9 @@ from baksneppen.model import BakSneppenModel
 
 try:
     from baksneppen.engine import BakSneppenEngine
+    TKINTER_INSTALLED = True
 except ImportError as err:
-    errmsg = "\n".join((
+    ERRMSG = "\n".join((
         "Import Error: {}\n".format(err),
         "Install python-tkinter if you want to use the graphical user interface.\n",
         "You may also run the script over the command line by adding 'nogui' " \
@@ -17,8 +18,7 @@ except ImportError as err:
         "interrupt (Ctrl + C)\n",
         "Example: main.py nogui -s=1000 -u=10000"
     ))
-    print(errmsg)
-    exit()
+    TKINTER_INSTALLED = False
 
 DEFAULT_SYSTEM_SIZE = 16
 
@@ -105,7 +105,6 @@ def nogui_simulation(size, updatemode, nupdates):
             try:
                 model.update()
             except KeyboardInterrupt:
-                print("Stopping simulation and saving data...")
                 break
 
             if not (model.time % 1000):
@@ -116,6 +115,7 @@ def nogui_simulation(size, updatemode, nupdates):
     meta_info = ", ".join((
         f"t = {data['time']}", f"n = {data['system size']}"
     ))
+    print("Stopping simulation and saving data...")
     savetxt("fitness.dat", data["fitness over time"], header=meta_info)
     savetxt("avalanche_durations.dat", data["avalanche durations"],
             header=meta_info + ", values as log10(duration)")
@@ -125,11 +125,14 @@ def main():
     """Main function of the script. """
     use_gui, size, mode, nupdates = parse_command_line_args()
 
+    if use_gui and not TKINTER_INSTALLED:
+        print(ERRMSG)
+        return
+
     if use_gui:
         engine = BakSneppenEngine()
         engine.change_size(size)
         engine.mainloop()
-
     else:
         nogui_simulation(size, mode, nupdates)
 
