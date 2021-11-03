@@ -10,7 +10,8 @@ try:
 except ImportError as err:
     ERRMSG = "\n".join((
         "Import Error: {}\n".format(err),
-        "Install python-tkinter if you want to use the graphical user interface.\n",
+        "Install python-tkinter if you want to use the graphical user interface.",
+        "(sudo apt-get install python3-tk).",
         "You may also run the script over the command line by adding 'nogui' " \
         "and supply the system size (-s), the update algorithm (-m) and the " \
         "number of updates (-u) as command line arguments. If no number of " \

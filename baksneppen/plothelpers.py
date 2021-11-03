@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
 
-HIST_BINS = np.arange(0, 7, 1)
+HIST_BINS = np.arange(0, 7, 0.3)
 
 PLOTS = {
     "fitness": {
