@@ -6,13 +6,18 @@ import numpy as np
 from random import random, randint
 
 DEFAULT_SIZE = 16
+DEFAULT_LAMBDA = 0.5
+EQUILIBRIUM_LAMBDA = 0.66
+EQUILIBRIUM_THRESHHOLD = 0.01
 
 
 class BakSneppenModel:
     """The evolution model of Bak and Sneppen"""
 
-    def __init__(self, size=None):
+    def __init__(self, size=None, critical_lambda=None):
         """Initialise the model"""
+        self.critical_lambda = critical_lambda if critical_lambda is not None \
+                               else DEFAULT_LAMBDA
         self.size = size if size is not None else DEFAULT_SIZE
         self.set_up_simulation()
 
@@ -38,10 +43,12 @@ class BakSneppenModel:
 
         if least_fitness > self.least_fitness:
             self.least_fitness = least_fitness
+
+        if least_fitness < self.critical_lambda:
+            self.avalanche_duration += 1
+        else:
             self.avalanche_durations.append(np.log10(self.avalanche_duration))
             self.avalanche_duration = 1
-        else:
-            self.avalanche_duration += 1
 
         if self.updatemode == 1:
             left_neighbour = weakling_index - 1
@@ -55,6 +62,7 @@ class BakSneppenModel:
 
         self.fitness_over_time.append(self.least_fitness)
         self.time += 1
+
 
     def set_size(self, size):
         """
@@ -90,5 +98,7 @@ class BakSneppenModel:
             "system size": self.size,
             "species": self.species,
             "fitness over time": np.array(self.fitness_over_time),
-            "avalanche durations": np.array(self.avalanche_durations)
+            # exclude the first value of the avalanches
+            # as it is not representative
+            "avalanche durations": np.array(self.avalanche_durations[1:])
         }

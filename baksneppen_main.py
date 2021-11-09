@@ -10,7 +10,8 @@ try:
 except ImportError as err:
     ERRMSG = "\n".join((
         "Import Error: {}\n".format(err),
-        "Install python-tkinter if you want to use the graphical user interface.\n",
+        "Install python-tkinter if you want to use the graphical user interface.",
+        "(sudo apt-get install python3-tk).",
         "You may also run the script over the command line by adding 'nogui' " \
         "and supply the system size (-s), the update algorithm (-m) and the " \
         "number of updates (-u) as command line arguments. If no number of " \
@@ -130,8 +131,12 @@ def main():
         return
 
     if use_gui:
+        if any([p is not None for p in (nupdates, )]):
+            print("Warning: Some command line parameters are ignored.")
+
         engine = BakSneppenEngine()
         engine.change_size(size)
+        engine.set_updatemode(mode)
         engine.mainloop()
     else:
         nogui_simulation(size, mode, nupdates)
