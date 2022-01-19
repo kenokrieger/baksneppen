@@ -69,9 +69,6 @@ class ForestFireEngine(SimulationEngine):
         """Change the size of the simulation. """
         self.model.set_size(size)
 
-    def set_scaling(self, scaling):
-        self.model.set_scaling(int(scaling))
-
     def set_lightning_probability(self, lightning_probability):
         self.model.set_lightning_probability(int(lightning_probability) / 100_000)
 

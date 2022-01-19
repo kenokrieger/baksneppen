@@ -26,12 +26,6 @@ def add_sliders(root, frame):
     tk.Scale(frame, from_=8, to=128, length=200, orient=tk.HORIZONTAL,
              command=root.change_size).grid(row=1, column=1)
 
-    tk.Label(frame, text="Simulation Speed: ", font="Verdana 11").grid(
-        row=2,column=0, sticky=tk.W
-    )
-    tk.Scale(frame, from_=1, to=1000, length=200, orient=tk.HORIZONTAL,
-             command=root.set_scaling).grid(row=2, column=1)
-
     tk.Label(frame, text="Lightning probability: ", font="Verdana 11").grid(
         row=3,column=0, sticky=tk.W
     )
@@ -75,9 +69,7 @@ def add_controls(root, frame):
     )
     tk.Button(master=frame, text="Restart",
               command=root.restart_simulation).grid(row=7, column=2)
-    tk.Button(master=frame, text="Export", command=root.export_data).grid(
-        row=8, column=0
-    )
+
     tk.Button(master=frame, text="Quit", command=root.exit).grid(
         row=9, column=3
     )

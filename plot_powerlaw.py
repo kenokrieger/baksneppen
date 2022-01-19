@@ -5,43 +5,44 @@ import matplotlib.pyplot as plt
 
 from uncertainties import ufloat
 
-BINS = np.arange(0, 6, 0.3)
+LOG_BINS = 30
 
 
-def linfunc(x, a, b):
+def lin_func(x, a, b):
     return a * x + b
 
+def power_law(x, a, b):
+    return b * x ** a
 
 if __name__ == "__main__":
-    avalanches = np.loadtxt("avalanche_durations.dat")
+    avalanches = np.loadtxt("avalanche_sizes.dat")
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    count, _ = np.histogram(avalanches, BINS)
-    nonzero_bins = BINS[np.nonzero(count)]
-    nonzero_count = count[np.nonzero(count)]
 
-    maxindex = np.argmax(nonzero_count)
+    counts, bin_edges = np.histogram(avalanches + 1, bins=np.logspace(0, np.log10(np.max(avalanches)), LOG_BINS))
+    counts = counts / np.diff(bin_edges)
+    bin_centres = np.sqrt(bin_edges[1:] * bin_edges[:-1])
 
-    params, pcov = curve_fit(linfunc, nonzero_bins[maxindex:], np.log10(nonzero_count[maxindex:]))
+    params, pcov = curve_fit(lin_func, np.log(bin_centres), np.log(counts + 1))
     perr = np.sqrt(np.diag(pcov))
-    ax.bar(nonzero_bins, np.log10(nonzero_count))
+    ax.bar(bin_centres, counts, width=np.diff(bin_edges))
 
-    plot_points = np.linspace(nonzero_bins[maxindex], 3, 5)
-    ax.plot(plot_points, linfunc(plot_points, *params), zorder=1, color="red")
+    ax.plot(bin_centres, power_law(bin_centres, -1.5, 10 ** 3), zorder=1, color="red")
 
-    ax.set_title("Linearised avalanche distribution\nt = 500.000, n = 1000")
-    ax.set_xlabel("Avalanche duration as log10")
-    ax.set_ylabel("Frequency as log10")
-    ax.set_xlim(-0.5, 7)
+    ax.set_title("Linearised avalanche distribution\nt = 100.000, n = 64x64")
+    ax.set_xlabel("Avalanche duration")
+    ax.set_ylabel("Frequency")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
     a, b = ufloat(params[0], perr[0]), ufloat(params[1], perr[1])
     print(a, b)
 
     textstr = '\n'.join((
         "$f(x) = ax + b$",
-        "$a = {}$".format(str(a).replace("+/-", "\\pm ")),
-        "$b = {}$".format(str(b).replace("+/-", "\\pm ")),
+        "$a = -1.5$",
+        "$b = 3$",
     ))
 
     props = dict(boxstyle='round', alpha=1, color="darkgrey")
@@ -49,3 +50,4 @@ if __name__ == "__main__":
     ax.text(0.60, 0.95, textstr, transform=ax.transAxes, fontsize=12,
             verticalalignment='top', bbox=props)
     plt.savefig("power_law.png", dpi=200)
+    plt.show()
