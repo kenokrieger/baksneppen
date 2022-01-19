@@ -8,8 +8,8 @@ from random import random, randint
 from forestfire import cell_state
 
 DEFAULT_SIZE = 8
-DEFAULT_LIGHTNING_PROBABILITY = 0.001
-DEFAULT_TREE_GROWTH = 0.001
+DEFAULT_LIGHTNING_PROBABILITY = 1e-5
+DEFAULT_TREE_GROWTH = 70e-5
 
 
 class ForestFireModel:

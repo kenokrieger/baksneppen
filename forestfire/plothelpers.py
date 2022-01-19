@@ -135,7 +135,7 @@ def clear(lines, bars):
 
     """
     for line in lines.values():
-        line.set_data([], [])
+        line.set_data([])
 
     for bar in bars.values():
         for rect in bar:
